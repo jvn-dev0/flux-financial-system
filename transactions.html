@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxBank - Transactions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a4d8c;
+            --sidebar-blue: #2c7da0;
+            --sidebar-dark: #1e5f7e;
+            --light-bg: #f5f7fa;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --success-green: #28a745;
+            --border-color: #e0e0e0;
+            --input-border: #ced4da;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (Same as Dashboard) */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--sidebar-blue) 0%, var(--sidebar-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon { font-size: 1.8rem; color: var(--white); }
+        .logo-text { font-size: 1.2rem; font-weight: 700; }
+
+        .nav-links {
+            list-style: none;
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-left: 4px solid var(--white);
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header (Same as Dashboard) */
+        .header {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .page-title { font-size: 1.2rem; font-weight: 500; color: var(--text-dark); }
+
+        .user-profile { display: flex; align-items: center; gap: 1.5rem; }
+        
+        .notification-bell { position: relative; cursor: pointer; color: var(--text-light); }
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: red; color: white; font-size: 0.6rem;
+            padding: 2px 5px; border-radius: 50%;
+        }
+
+        .user-dropdown {
+            display: flex; align-items: center; gap: 0.5rem;
+            cursor: pointer; font-weight: 500; color: var(--text-dark);
+        }
+
+        /* Content Body */
+        .content-body {
+            padding: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Controls */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-tabs {
+            display: flex;
+            background: var(--white);
+            border-radius: 8px;
+            padding: 0.3rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--sidebar-blue);
+            color: var(--white);
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        /* Table */
+        .table-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: var(--text-light);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #fcfcfc; }
+
+        .tx-desc h4 { font-size: 1rem; font-weight: 500; margin-bottom: 0.2rem; }
+        .tx-desc p { font-size: 0.85rem; color: var(--text-light); }
+
+        .tx-amount { font-weight: 600; font-size: 1.05rem; }
+        .credit { color: var(--success-green); }
+        .debit { color: #dc3545; }
+
+        .badge-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-success { background: #e8f5e9; color: #2e7d32; }
+
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-light);
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-university logo-icon"></i>
+            <div class="logo-text">Flux Financial<br><span style="font-size:0.8rem; font-weight:400; opacity:0.8;">Online Banking</span></div>
+        </div>
+        
+        <ul class="nav-links">
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="transfer_money.html" class="nav-item"><i class="fas fa-exchange-alt"></i> Transfer Money</a>
+            <a href="add_beneficiary.html" class="nav-item"><i class="fas fa-user-plus"></i> Add Beneficiary</a>
+            <a href="#" class="nav-item active"><i class="fas fa-file-contract"></i> Transactions</a>
+            <a href="kyc_process.html" class="nav-item"><i class="fas fa-id-card"></i> Complete KYC</a>
+            <a href="change_password.html" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
+        </ul>
+
+        <a href="#" class="nav-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="page-title">Online Banking</div>
+            <div class="user-profile">
+                <div class="notification-bell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </div>
+                <div class="user-dropdown">
+                    <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--sidebar-blue);"></i>
+                    <span id="header-acc-id">ACC-1001</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.8rem; color:var(--text-light);"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <div class="content-body">
+            <h2 class="page-heading">Transactions</h2>
+
+            <div class="controls-bar">
+                <div class="filter-tabs">
+                    <button class="tab-btn active" onclick="filterTransactions('all')">All</button>
+                    <button class="tab-btn" onclick="filterTransactions('Credit')">Received</button>
+                    <button class="tab-btn" onclick="filterTransactions('Debit')">Sent</button>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search transactions..." onkeyup="searchTable()">
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table id="txTable">
+                    <thead>
+                        <tr>
+                            <th width="15%">Date</th>
+                            <th width="40%">Description</th>
+                            <th width="15%">Ref Number</th>
+                            <th width="15%">Amount</th>
+                            <th width="15%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state">
+                    No transactions found matching your criteria.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Logic ---
+        const session = JSON.parse(localStorage.getItem('userSession'));
+        if (!session) {
+            window.location.href = "login.html";
+        }
+
+        const accountID = session.account_id || 'ACC-1001';
+        document.getElementById('header-acc-id').innerText = accountID;
+
+        let allTransactions = [];
+
+        async function fetchTransactions() {
+            try {
+                const response = await fetch(`/api/user/transactions/${accountID}`);
+                const data = await response.json();
+                
+                // Map Backend Data to UI Format
+                allTransactions = (data.transactions || []).map(tx => ({
+                    date: tx.Timestamp,
+                    description: tx.Description || 'Transaction',
+                    ref: tx.SessionID || 'REF-???',
+                    amount: tx.TransactionAmount,
+                    type: tx.TransactionType || 'Debit', // Default
+                    remarks: tx.Description
+                }));
+
+                renderTable(allTransactions);
+            } catch (error) {
+                console.error("Error fetching transactions:", error);
+                document.getElementById('emptyState').innerText = "Failed to load transactions.";
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('txBody');
+            const empty = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            data.forEach(tx => {
+                const tr = document.createElement('tr');
+                const isCredit = tx.type === 'Credit';
+                const sign = isCredit ? '+' : '-';
+                const typeClass = isCredit ? 'credit' : 'debit';
+                // Handle date format differences if any
+                const dateProps = tx.date; 
+
+                tr.innerHTML = `
+                    <td>${dateProps}</td>
+                    <td class="tx-desc">
+                        <h4>${tx.description}</h4>
+                        <p>${tx.type}</p>
+                    </td>
+                    <td style="font-family:monospace; color:#666;">${tx.ref}</td>
+                    <td class="tx-amount ${typeClass}">${sign}₹${tx.amount.toFixed(2)}</td>
+                    <td><span class="badge-status status-success">Success</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        let currentFilter = 'all';
+
+        function filterTransactions(type) {
+            // Update UI
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentFilter = type;
+            applyFilters();
+        }
+
+        function searchTable() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = allTransactions;
+
+            // Type Filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(tx => tx.type === currentFilter);
+            }
+
+            // Search Filter
+            if (query) {
+                filtered = filtered.filter(tx => 
+                    (tx.description && tx.description.toLowerCase().includes(query)) || 
+                    (tx.ref && tx.ref.toLowerCase().includes(query))
+                );
+            }
+
+            renderTable(filtered);
+        }
+
+        function logout() {
+            localStorage.removeItem('userSession');
+            window.location.href = "login.html";
+        }
+
+        // Init
+        fetchTransactions();
+
+    </script>
+
+    </script>
+</body>
+</html>
