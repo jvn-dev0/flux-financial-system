@@ -66,6 +66,9 @@ class DatabaseManager:
             try:
                 ws = self.sh.worksheet(sheet_name)
                 data = ws.get_all_records()
+                if not data:
+                    headers = ws.row_values(1)
+                    return pd.DataFrame(columns=headers)
                 return pd.DataFrame(data)
             except gspread.WorksheetNotFound:
                  # Return empty DF with correct columns if possible, but safer to error or default
