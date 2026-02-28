@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxBank - Online Banking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a4d8c;
+            --sidebar-blue: #2c7da0;
+            --sidebar-dark: #1e5f7e;
+            --light-bg: #f5f7fa;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --success-green: #28a745;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--sidebar-blue) 0%, var(--sidebar-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--white);
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-left: 4px solid var(--white);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 50%;
+        }
+
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        /* Dashboard Body */
+        .dashboard-body {
+            padding: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .last-login {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Success Alert */
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 5px solid #2e7d32;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 0.8rem;
+        }
+
+        /* Account Details */
+        .account-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .detail-item {
+            margin-bottom: 1rem;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 0.3rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active { background: #e8f5e9; color: #2e7d32; }
+        .status-pending { background: #fff8e1; color: #fbc02d; }
+
+        /* Balance Card */
+        .balance-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 1rem 0;
+        }
+
+        .balance-note {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Quick Actions */
+        .actions-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: var(--white);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: var(--sidebar-blue);
+        }
+
+        .action-icon {
+            width: 45px;
+            height: 45px;
+            background: #e3f2fd;
+            color: var(--primary-blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .action-text {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Transactions */
+        .empty-transactions {
+            text-align: center;
+            padding: 3rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            color: var(--text-light);
+        }
+
+        .trans-list {
+            list-style: none;
+        }
+
+        .trans-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .trans-item:last-child { border-bottom: none; }
+
+        .trans-amount.credit { color: var(--success-green); }
+        .trans-amount.debit { color: #dc3545; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-university logo-icon"></i>
+            <div class="logo-text">Flux Financial<br><span style="font-size:0.8rem; font-weight:400; opacity:0.8;">Online Banking</span></div>
+        </div>
+        
+        <ul class="nav-links">
+            <a href="#" class="nav-item active"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="transfer_money.html" class="nav-item"><i class="fas fa-exchange-alt"></i> Transfer Money</a>
+            <a href="add_beneficiary.html" class="nav-item"><i class="fas fa-user-plus"></i> Add Beneficiary</a>
+            <a href="transactions.html" class="nav-item"><i class="fas fa-file-contract"></i> Transactions</a>
+            <a href="kyc_process.html" class="nav-item"><i class="fas fa-id-card"></i> Complete KYC</a>
+            <a href="change_password.html" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
+        </ul>
+
+        <a href="#" class="nav-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="page-title">Online Banking</div>
+            <div class="user-profile">
+                <div class="notification-bell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </div>
+                <div class="user-dropdown">
+                    <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--sidebar-blue);"></i>
+                    <span id="header-acc-id">ACC-1001</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.8rem; color:var(--text-light);"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Body -->
+        <div class="dashboard-body">
+            
+            <div class="welcome-section">
+                <h1 class="welcome-text">Welcome, <span id="user-firstname">User</span>!</h1>
+                <p class="last-login">Last Login: <span id="last-login">First Login</span></p>
+            </div>
+
+            <!-- New User Alert -->
+            <div id="new-user-alert" class="alert-success" style="display:none;">
+                <i class="fas fa-check-circle"></i>
+                <span>Your Savings Account (<span id="alert-acc-id">ACC-1001</span>) has been created successfully.</span>
+            </div>
+
+            <!-- Overview Grid -->
+            <div class="dashboard-grid">
+                <!-- Account Overview -->
+                <div class="card">
+                    <div class="card-header">Account Overview</div>
+                    <div class="account-details">
+                        <div class="detail-item">
+                            <div class="detail-value" id="overview-acc-id" style="font-size:1.4rem; color:var(--primary-blue);">ACC-1001</div>
+                            <div class="detail-label">Account Number</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value" id="overview-ifsc" style="font-size:1.1rem; color:var(--text-dark);">---</div>
+                            <div class="detail-label">IFSC Code</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value">Savings Account</div>
+                            <div class="detail-label">Account Type</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Account Status</div>
+                            <div class="status-badge status-active"><i class="fas fa-check-circle"></i> Active</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">KYC Status</div>
+                            <div class="status-badge status-pending" id="kyc-badge"><i class="fas fa-clock"></i> Pending</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance Card -->
+                <div class="card balance-card">
+                    <div class="card-header" style="border:none; margin:0; padding:0;">Account Balance</div>
+                    <div class="balance-amount" id="balance-display">₹ 0.00</div>
+                    <div class="balance-note" id="balance-note">No money has been deposited yet.</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <h3 class="actions-label">Getting Started</h3>
+            <div class="actions-grid">
+                <div class="action-card" onclick="window.location.href='add_money.html'">
+                    <div class="action-icon"><i class="fas fa-wallet"></i></div>
+                    <div class="action-text">Add Money</div>
+                </div>
+                <div class="action-card" onclick="window.location.href='add_beneficiary.html'">
+                    <div class="action-icon"><i class="fas fa-user-plus"></i></div>
+                    <div class="action-text">Add<br>Beneficiary</div>
+                </div>
+                <div class="action-card" onclick="window.location.href='kyc_process.html'">
+                    <div class="action-icon"><i class="fas fa-id-card"></i></div>
+                    <div class="action-text">Complete<br>KYC</div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <h3 class="actions-label">Recent Transactions</h3>
+            <div class="card">
+                <div id="transactions-container">
+                    <!-- Populated by JS -->
+                    <div class="empty-transactions">
+                        <i class="fas fa-receipt" style="font-size:2rem; margin-bottom:1rem; opacity:0.3;"></i>
+                        <p>No transactions yet</p>
+                        <p style="font-size:0.9rem; margin-top:0.5rem;">Make your first deposit or transfer to start using your account.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Check Auth
+        const session = JSON.parse(localStorage.getItem('userSession'));
+        if (!session) {
+            window.location.href = 'login.html';
+        }
+
+        // Update UI with Session Data
+        document.getElementById('user-firstname').innerText = session.full_name ? session.full_name.split(' ')[0] : 'User';
+        document.getElementById('header-acc-id').innerText = session.account_id || '---';
+        document.getElementById('alert-acc-id').innerText = session.account_id || '---';
+        document.getElementById('overview-acc-id').innerText = session.account_id || '---';
+        
+        // Mock Last Login for now (or store in session)
+        document.getElementById('last-login').innerText = new Date().toLocaleDateString();
+
+        // Fetch Real Data from Backend
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch(`/api/user/dashboard/${session.account_id}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('Error fetching data:', data.error);
+                    return;
+                }
+
+                // Update Balance
+                const balance = data.balance || 0;
+                document.getElementById('balance-display').innerText = '₹' + balance.toFixed(2);
+                
+                // Update New User Alert / Balance Note
+                if (balance === 0 && data.recent_activity.length === 0) {
+                     document.getElementById('new-user-alert').style.display = 'flex';
+                     document.getElementById('balance-note').innerText = "No money has been deposited yet.";
+                } else {
+                     document.getElementById('new-user-alert').style.display = 'none';
+                     document.getElementById('balance-note').innerText = "Available Balance";
+                }
+
+                // Update Account Numbers & IFSC
+                document.getElementById('overview-acc-id').innerText = data.account_number || session.account_id;
+                document.getElementById('overview-ifsc').innerText = data.ifsc || 'Not Assigned';
+
+                // Update KYC Status
+                const kycBadge = document.getElementById('kyc-badge');
+                if(data.kyc_status === 'Verified') {
+                    kycBadge.className = "status-badge status-active";
+                    kycBadge.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
+                } else if(data.kyc_status === 'Not Started' || data.kyc_status === 'Not Submitted') {
+                    kycBadge.className = "status-badge";
+                    kycBadge.style.background = "#e0e0e0";
+                    kycBadge.style.color = "#333";
+                    kycBadge.innerHTML = '<i class="fas fa-exclamation-circle"></i> Not Started';
+                } else {
+                    kycBadge.className = "status-badge status-pending";
+                    kycBadge.innerHTML = '<i class="fas fa-clock"></i> ' + (data.kyc_status || 'Pending');
+                }
+
+                // Populate Recent Activity
+                const txContainer = document.getElementById('transactions-container');
+                
+                if (data.recent_activity.length === 0) {
+                    txContainer.innerHTML = `
+                        <div class="empty-transactions">
+                            <i class="fas fa-receipt" style="font-size:2rem; margin-bottom:1rem; opacity:0.3;"></i>
+                            <p>No transactions yet</p>
+                            <p style="font-size:0.9rem; margin-top:0.5rem;">Make your first deposit or transfer to start using your account.</p>
+                        </div>`;
+                } else {
+                    let html = '<ul class="trans-list">';
+                    data.recent_activity.forEach(tx => {
+                        // Check TransactionType from backend
+                        // Default to Debit if missing (for old data)
+                        const isDebit = tx.TransactionType === 'Debit'; 
+                        const colorClass = isDebit ? 'debit' : 'credit'; // credit class is green
+                        const sign = isDebit ? '-' : '+';
+                        const typeLabel = tx.TransactionType === 'Debit' ? 'Transfer Out' : 'Deposit';
+                        
+                        html += `
+                            <li class="trans-item">
+                                <div>
+                                    <div style="font-weight:500;">${typeLabel}</div>
+                                    <div style="font-size:0.85rem; color:#888;">${tx.Timestamp}</div>
+                                </div>
+                                <div class="trans-amount ${colorClass}">${sign} ₹${tx.TransactionAmount}</div>
+                            </li>
+                        `;
+                    });
+                    html += '</ul>';
+                    txContainer.innerHTML = html;
+                }
+
+            } catch (error) {
+                console.error('Connection Error:', error);
+            }
+        }
+
+        fetchDashboardData();
+
+        function logout() {
+            localStorage.removeItem('userSession');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

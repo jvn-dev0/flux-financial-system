@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxBank - Add Beneficiary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a4d8c;
+            --sidebar-blue: #2c7da0;
+            --sidebar-dark: #1e5f7e;
+            --light-bg: #f5f7fa;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --success-green: #28a745;
+            --border-color: #e0e0e0;
+            --input-border: #ced4da;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (Same as Dashboard) */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--sidebar-blue) 0%, var(--sidebar-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon { font-size: 1.8rem; color: var(--white); }
+        .logo-text { font-size: 1.2rem; font-weight: 700; }
+
+        .nav-links {
+            list-style: none;
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-left: 4px solid var(--white);
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header (Same as Dashboard) */
+        .header {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .page-title { font-size: 1.2rem; font-weight: 500; color: var(--text-dark); }
+
+        .user-profile { display: flex; align-items: center; gap: 1.5rem; }
+        
+        .notification-bell { position: relative; cursor: pointer; color: var(--text-light); }
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: red; color: white; font-size: 0.6rem;
+            padding: 2px 5px; border-radius: 50%;
+        }
+
+        .user-dropdown {
+            display: flex; align-items: center; gap: 0.5rem;
+            cursor: pointer; font-weight: 500; color: var(--text-dark);
+        }
+
+        /* Content Body */
+        .content-body {
+            padding: 2rem;
+            max-width: 800px; /* Slightly narrower for this form */
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.8rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus { border-color: var(--sidebar-blue); }
+
+        .btn-add {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn-add:hover { background-color: #154178; }
+
+        .success-message {
+            margin-top: 1.5rem;
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #c3e6cb;
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-university logo-icon"></i>
+            <div class="logo-text">Flux Financial<br><span style="font-size:0.8rem; font-weight:400; opacity:0.8;">Online Banking</span></div>
+        </div>
+        
+        <ul class="nav-links">
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="transfer_money.html" class="nav-item"><i class="fas fa-exchange-alt"></i> Transfer Money</a>
+            <a href="#" class="nav-item active"><i class="fas fa-user-plus"></i> Add Beneficiary</a>
+            <a href="transactions.html" class="nav-item"><i class="fas fa-file-contract"></i> Transactions</a>
+            <a href="kyc_process.html" class="nav-item"><i class="fas fa-id-card"></i> Complete KYC</a>
+            <a href="change_password.html" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
+        </ul>
+
+        <a href="#" class="nav-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="page-title">Online Banking</div>
+            <div class="user-profile">
+                <div class="notification-bell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </div>
+                <div class="user-dropdown">
+                    <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--sidebar-blue);"></i>
+                    <span id="header-acc-id">ACC-1001</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.8rem; color:var(--text-light);"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <div class="content-body">
+            <h2 class="page-heading">Add Beneficiary</h2>
+
+            <div class="form-card">
+                <h3 class="form-title">New Payee Details</h3>
+                
+                <form id="addBenForm">
+                    <div class="form-group">
+                        <label class="form-label">Beneficiary Name</label>
+                        <input type="text" class="form-control" id="benName" placeholder="Enter full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-control" id="benAcc" placeholder="Enter account number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Account Number</label>
+                        <input type="text" class="form-control" id="benAccConfirm" placeholder="Re-enter account number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IFSC Code</label>
+                        <input type="text" class="form-control" id="benIfsc" placeholder="e.g. HDFC0001234" required style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nickname (Optional)</label>
+                        <input type="text" class="form-control" id="benNick" placeholder="e.g. Rent, Mom, etc.">
+                    </div>
+
+                    <button type="submit" class="btn-add">Add Beneficiary</button>
+                    
+                    <div id="successMessage" class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Beneficiary added successfully! You can now transfer funds.</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Logic ---
+        const session = JSON.parse(localStorage.getItem('userSession'));
+        if (!session) {
+            window.location.href = "login.html";
+        }
+
+        const accountID = session.account_id;
+        document.getElementById('header-acc-id').innerText = accountID;
+
+        document.getElementById('addBenForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('benName').value;
+            const account_number = document.getElementById('benAcc').value;
+            const accConfirm = document.getElementById('benAccConfirm').value;
+            const ifsc = document.getElementById('benIfsc').value;
+            const nickname = document.getElementById('benNick').value;
+            
+            const btn = document.querySelector('.btn-add');
+            const msgDiv = document.getElementById('successMessage');
+
+            // Reset UI
+            msgDiv.style.display = 'none';
+            msgDiv.className = 'success-message'; // Reset Error State
+
+            // Validation
+            if (account_number !== accConfirm) {
+                alert("Account numbers do not match!");
+                return;
+            }
+
+            // Processing
+            btn.disabled = true;
+            btn.innerText = "Adding Beneficiary...";
+
+            try {
+                const response = await fetch('/api/user/beneficiaries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        account_id: accountID,
+                        name: name,
+                        account_number: account_number,
+                        ifsc: ifsc,
+                        nickname: nickname
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    // Show Success
+                    msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> <span>Beneficiary added successfully! You can now transfer funds.</span>';
+                    msgDiv.style.backgroundColor = '#d4edda';
+                    msgDiv.style.color = '#155724';
+                    msgDiv.style.display = 'flex';
+                    
+                    // Clear Form
+                    document.getElementById('addBenForm').reset();
+                } else {
+                    throw new Error(result.message || "Failed to add beneficiary");
+                }
+
+            } catch (error) {
+                console.error(error);
+                msgDiv.innerHTML = `<i class="fas fa-times-circle"></i> <span>Error: ${error.message}</span>`;
+                msgDiv.style.backgroundColor = '#f8d7da';
+                msgDiv.style.color = '#721c24';
+                msgDiv.style.display = 'flex';
+            } finally {
+                btn.innerText = "Add Beneficiary";
+                btn.disabled = false;
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('userSession');
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

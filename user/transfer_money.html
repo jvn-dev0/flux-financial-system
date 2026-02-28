@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxBank - Transfer Money</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a4d8c;
+            --sidebar-blue: #2c7da0;
+            --sidebar-dark: #1e5f7e;
+            --light-bg: #f5f7fa;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --success-green: #28a745;
+            --border-color: #e0e0e0;
+            --input-border: #ced4da;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (Same as Dashboard) */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--sidebar-blue) 0%, var(--sidebar-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon { font-size: 1.8rem; color: var(--white); }
+        .logo-text { font-size: 1.2rem; font-weight: 700; }
+
+        .nav-links {
+            list-style: none;
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-left: 4px solid var(--white);
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header (Same as Dashboard) */
+        .header {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .page-title { font-size: 1.2rem; font-weight: 500; color: var(--text-dark); }
+
+        .user-profile { display: flex; align-items: center; gap: 1.5rem; }
+        
+        .notification-bell { position: relative; cursor: pointer; color: var(--text-light); }
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: red; color: white; font-size: 0.6rem;
+            padding: 2px 5px; border-radius: 50%;
+        }
+
+        .user-dropdown {
+            display: flex; align-items: center; gap: 0.5rem;
+            cursor: pointer; font-weight: 500; color: var(--text-dark);
+        }
+
+        /* Content Body */
+        .content-body {
+            padding: 2rem;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.8rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus { border-color: var(--sidebar-blue); }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
+        .row { display: flex; gap: 1.5rem; }
+        .col { flex: 1; }
+
+        @media (max-width: 768px) {
+            .row { flex-direction: column; gap: 0; }
+        }
+
+        .btn-transfer {
+            background-color: #218838; /* Green per design */
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-transfer:hover { background-color: #1e7e34; }
+
+        .success-message {
+            margin-top: 1.5rem;
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #c3e6cb;
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .input-group-text {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        
+        .amount-wrapper { position: relative; }
+        .amount-wrapper .form-control { padding-left: 1.8rem; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-university logo-icon"></i>
+            <div class="logo-text">Flux Financial<br><span style="font-size:0.8rem; font-weight:400; opacity:0.8;">Online Banking</span></div>
+        </div>
+        
+        <ul class="nav-links">
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="nav-item active"><i class="fas fa-exchange-alt"></i> Transfer Money</a>
+            <a href="add_beneficiary.html" class="nav-item"><i class="fas fa-user-plus"></i> Add Beneficiary</a>
+            <a href="transactions.html" class="nav-item"><i class="fas fa-file-contract"></i> Transactions</a>
+            <a href="kyc_process.html" class="nav-item"><i class="fas fa-id-card"></i> Complete KYC</a>
+            <a href="change_password.html" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
+        </ul>
+
+        <a href="#" class="nav-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="page-title">Online Banking</div>
+            <div class="user-profile">
+                <div class="notification-bell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </div>
+                <div class="user-dropdown">
+                    <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--sidebar-blue);"></i>
+                    <span id="header-acc-id">ACC-1001</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.8rem; color:var(--text-light);"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <div class="content-body">
+            <h2 class="page-heading">Transfer Money</h2>
+
+            <div class="form-card">
+                <h3 class="form-title">Send Money</h3>
+                
+                <form id="transferForm">
+                    <!-- Select Beneficiary -->
+                    <div class="form-group">
+                        <label class="form-label">Select Beneficiary</label>
+                        <select class="form-control form-select" id="beneficiarySelect" onchange="autoFillBeneficiary()">
+                            <option value="">Select Beneficiary</option>
+                            <option value="john">John Doe - HDFC000123</option>
+                            <option value="jane">Jane Smith - SBIN000456</option>
+                        </select>
+                    </div>
+
+                    <!-- Receiver Account Number -->
+                    <div class="form-group">
+                        <label class="form-label">Receiver Account Number</label>
+                        <input type="text" class="form-control" id="receiverAcc" placeholder="Receiver Account Number">
+                    </div>
+
+                    <!-- IFSC & Amount Row -->
+                    <div class="row">
+                        <div class="col form-group">
+                            <label class="form-label">IFSC Code</label>
+                            <input type="text" class="form-control" id="ifscCode" placeholder="IFSC Code">
+                        </div>
+                        <div class="col form-group">
+                            <label class="form-label">Amount</label>
+                            <div class="amount-wrapper">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="amount" placeholder="Amount" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="form-group">
+                        <label class="form-label">Remarks</label>
+                        <input type="text" class="form-control" id="remarks" placeholder="Remarks">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-transfer">Transfer</button>
+                    
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Transaction successful!</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Use immediate execution to avoid global scope pollution
+        (function() {
+            const accountID = localStorage.getItem("accountID") || 'ACC-1001'; // Fallback
+            // Update Header
+            const headerAcc = document.getElementById('header-acc-id');
+            if(headerAcc) headerAcc.innerText = accountID;
+
+            // Load Beneficiaries from API
+            async function loadBeneficiaries() {
+                const select = document.getElementById('beneficiarySelect');
+                if(!select) return;
+
+                // Clear existing (except default)
+                select.innerHTML = '<option value="">Select Beneficiary</option>';
+
+                const session = JSON.parse(localStorage.getItem('userSession'));
+                if (!session) return;
+
+                try {
+                    const response = await fetch(`/api/user/beneficiaries/${session.account_id}`);
+                    const data = await response.json();
+                    
+                    if(data.beneficiaries && data.beneficiaries.length > 0) {
+                        data.beneficiaries.forEach(ben => addOption(ben));
+                    } else {
+                        // Optional: Add a 'No beneficiaries' option or link to add
+                        const opt = document.createElement('option');
+                        opt.text = "No beneficiaries found. Add one first.";
+                        opt.disabled = true;
+                        select.add(opt);
+                    }
+                } catch (e) {
+                    console.error("Failed to load beneficiaries", e);
+                }
+            }
+
+            function addOption(ben) {
+                const select = document.getElementById('beneficiarySelect');
+                const option = document.createElement('option');
+                option.value = ben.AccountID || ben.BeneficiaryName; // Use Name as ID for now or generated ID if available
+                option.dataset.acc = ben.AccountNumber;
+                option.dataset.ifsc = ben.IFSC;
+                option.innerText = `${ben.BeneficiaryName} - ${ben.AccountNumber}`;
+                select.appendChild(option);
+            }
+
+            // Expose to global scope for the onchange event
+            window.autoFillBeneficiary = function() {
+                const select = document.getElementById('beneficiarySelect');
+                const selectedOption = select.options[select.selectedIndex];
+                
+                if (selectedOption.value) {
+                    document.getElementById('receiverAcc').value = selectedOption.dataset.acc;
+                    document.getElementById('ifscCode').value = selectedOption.dataset.ifsc;
+                } else {
+                    document.getElementById('receiverAcc').value = '';
+                    document.getElementById('ifscCode').value = '';
+                }
+            }
+
+            // Init Beneficiaries
+            loadBeneficiaries();
+
+            // --- REAL BACKEND INTEGRATION ---
+            // Check Auth
+            const session = JSON.parse(localStorage.getItem('userSession'));
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('transferForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const beneficiary = document.getElementById('beneficiarySelect').value;
+                const receiverAcc = document.getElementById('receiverAcc').value;
+                const ifscCode = document.getElementById('ifscCode').value;
+                const amount = document.getElementById('amount').value;
+                const msgDiv = document.getElementById('successMessage'); 
+                const btn = document.querySelector('.btn-transfer');
+
+                // Reset UI
+                msgDiv.style.display = 'none';
+                msgDiv.className = 'success-message';
+                
+                // 1. Validation
+                if (!receiverAcc || !ifscCode || !amount || parseFloat(amount) <= 0) {
+                    msgDiv.className = 'success-message error'; // Reuse class for styling
+                    msgDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please provide valid account details and amount.';
+                    msgDiv.style.backgroundColor = '#f8d7da';
+                    msgDiv.style.color = '#721c24';
+                    msgDiv.style.borderColor = '#f5c6cb';
+                    msgDiv.style.display = 'flex';
+                    return;
+                }
+
+                // 2. Loading State
+                btn.disabled = true;
+                const originalBtnText = btn.innerText;
+                btn.innerText = "Processing Transaction...";
+
+                try {
+                    // 3. API Call
+                    const response = await fetch('/api/transaction/transfer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sender_id: session.account_id,
+                            amount: amount,
+                            recipient_account: receiverAcc,
+                            recipient_ifsc: ifscCode,
+                            session_id: 'SES-' + Math.floor(Math.random() * 100000)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    // 4. Handle Response
+                    if (result.status === 'success') {
+                        msgDiv.className = 'success-message';
+                        msgDiv.style.backgroundColor = '#d4edda'; // Reset to green
+                        msgDiv.style.color = '#155724';
+                        msgDiv.innerHTML = `
+                            <div>
+                                <strong><i class="fas fa-check-circle"></i> Transaction Successful!</strong><br>
+                                <span style="font-size:0.9rem">Risk Score: ${result.risk_score} (ML Analyzed)</span><br>
+                                <span style="font-size:0.9rem">New Balance: ₹${result.new_balance.toFixed(2)}</span>
+                            </div>
+                        `;
+                        msgDiv.style.display = 'flex';
+                        
+                        // Clear Input
+                        document.getElementById('amount').value = '';
+                    } else {
+                        throw new Error(result.message || 'Transfer failed');
+                    }
+
+                } catch (error) {
+                    console.error('Transaction Error:', error);
+                    msgDiv.className = 'success-message error';
+                    msgDiv.style.backgroundColor = '#f8d7da';
+                    msgDiv.style.color = '#721c24';
+                    msgDiv.innerHTML = `<i class="fas fa-times-circle"></i> Failed: ${error.message}`;
+                    msgDiv.style.display = 'flex';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalBtnText;
+                }
+            });
+
+            // Global Logout
+            window.logout = function() {
+                localStorage.removeItem('userSession');
+                window.location.href = "login.html";
+            }
+        })();
+    </script>
+</body>
+</html>

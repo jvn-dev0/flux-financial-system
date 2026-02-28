@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxBank - Secure & Smart Online Banking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: 10px;
+            --primary-glow: rgba(0, 255, 255, 0.6);
+            --text-color: #ffffff;
+            --accent-color: #00d2ff;
+            --secondary-color: #3a7bd5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px var(--primary-glow); }
+            50% { box-shadow: 0 0 20px var(--primary-glow); }
+            100% { box-shadow: 0 0 5px var(--primary-glow); }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-out forwards;
+            opacity: 0; /* Star hidden */
+        }
+
+        /* Glassmorphism Utility */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navbar */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(15, 32, 39, 0.8);
+            backdrop-filter: blur(15px);
+            padding: 1rem 5%;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--accent-color);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .auth-buttons button {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 1rem;
+            font-weight: 600;
+        }
+
+        .auth-buttons button.primary {
+            background: var(--accent-color);
+            color: #0f2027;
+        }
+
+        .auth-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+        }
+
+        /* Hero Section */
+        #hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5rem 10%;
+            min-height: 90vh; /* Account for navbar */
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-content p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.6);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .glass-card-visual {
+            width: 300px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            animation: float 6s ease-in-out infinite;
+            position: relative;
+        }
+
+        /* Decorative "circles" behind glass card */
+        .hero-visual::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--accent-color);
+            filter: blur(80px);
+            border-radius: 50%;
+            top: -20px;
+            right: 50px;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* Features Section */
+        #features {
+            padding: 5rem 10%;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            padding: 2.5rem;
+            text-align: left;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+            display: inline-block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        #stats {
+            padding: 4rem 10%;
+            background: rgba(0, 0, 0, 0.2);
+            margin-top: 3rem;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item h2 {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 10%;
+            background: rgba(15, 32, 39, 0.9);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .footer-socials a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            transition: color 0.3s;
+        }
+
+        .footer-socials a:hover {
+            color: var(--accent-color);
+        }
+
+        .copyright {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 900px) {
+            #hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 7rem;
+            }
+
+            .hero-content {
+                margin-bottom: 4rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .cta-buttons {
+                justify-content: center;
+            }
+
+            .nav-links {
+                display: none; /* Simplify for this single file demo */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="glass" id="navbar">
+        <a href="#" class="logo">FluxBank</a>
+        <ul class="nav-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#stats">Security</a></li>
+            <li><a href="#footer">Contact</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <button onclick="window.location.href='user/login.html'">Login</button>
+            <button class="primary" onclick="window.location.href='user/signup.html'">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-content fade-in" style="animation-delay: 0.2s;">
+            <h1>Secure & Smart<br>Online Banking</h1>
+            <p>Experience the future of finance with FluxBank. Seamless transactions, top-tier security, and real-time insights—all in one place.</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="window.location.href='user/login.html'">Get Started</button>
+                <button class="btn btn-outline">Learn More</button>
+            </div>
+        </div>
+        <div class="hero-visual fade-in" style="animation-delay: 0.4s;">
+            <div class="glass-card-visual">
+                <!-- Abstract Design Inside Card -->
+                <div style="position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2);"></div>
+                <div style="position: absolute; bottom: 40px; right: 30px; width: 80%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;"></div>
+                <div style="position: absolute; bottom: 70px; right: 30px; width: 60%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="features-grid">
+            <div class="feature-card glass fade-in" style="animation-delay: 0.6s;">
+                <div class="feature-icon">💸</div>
+                <h3>Easy Transactions</h3>
+                <p>Send and receive money instantly across the globe with zero hidden fees and real-time tracking.</p>
+            </div>
+            <div class="feature-card glass fade-in" style="animation-delay: 0.8s;">
+                <div class="feature-icon">🛡️</div>
+                <h3>Advanced Security</h3>
+                <p>Your data is protected by military-grade encryption and biometric authentication protocols.</p>
+            </div>
+            <div class="feature-card glass fade-in" style="animation-delay: 1.0s;">
+                <div class="feature-icon">🎧</div>
+                <h3>24/7 Support</h3>
+                <p>Our dedicated support team is available around the clock to assist you with any inquiries.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats">
+        <div class="stats-container">
+            <div class="stat-item fade-in" style="animation-delay: 1.1s;">
+                <h2>900K+</h2>
+                <p>Active Users</p>
+            </div>
+            <div class="stat-item fade-in" style="animation-delay: 1.2s;">
+                <h2>256-bit</h2>
+                <p>Encryption Standard</p>
+            </div>
+            <div class="stat-item fade-in" style="animation-delay: 1.3s;">
+                <h2>99.9%</h2>
+                <p>Uptime Guarantee</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="footer-logo">FluxBank</div>
+        <div class="copyright">© 2026 FluxBank Inc. All rights reserved.</div>
+        <div class="footer-socials">
+            <a href="#">Twitter</a>
+            <a href="#">LinkedIn</a>
+            <a href="#">Instagram</a>
+        </div>
+    </footer>
+
+    <script>
+        // Sticky Navbar Effect
+        window.addEventListener("scroll", function() {
+            const navbar = document.querySelector("nav");
+            if (window.scrollY > 50) {
+                navbar.classList.add("scrolled");
+            } else {
+                navbar.classList.remove("scrolled");
+            }
+        });
+
+        // Simple Fade In on Scroll (Intersection Observer for simplicity)
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.animationPlayState = "running";
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = "0"; // Ensure hidden initially
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
