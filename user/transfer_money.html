@@ -432,6 +432,7 @@
                 btn.innerText = "Processing Transaction...";
 
                 try {
+                    const sessionDuration = session.login_time ? Math.floor((Date.now() - session.login_time) / 1000) : 0;
                     // 3. API Call
                     const response = await fetch('/api/transaction/transfer', {
                         method: 'POST',
@@ -441,7 +442,8 @@
                             amount: amount,
                             recipient_account: receiverAcc,
                             recipient_ifsc: ifscCode,
-                            session_id: 'SES-' + Math.floor(Math.random() * 100000)
+                            session_id: 'SES-' + Math.floor(Math.random() * 100000),
+                            session_duration: sessionDuration
                         })
                     });
 

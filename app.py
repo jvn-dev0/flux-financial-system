@@ -65,6 +65,12 @@ def login():
             })
         else:
             print("DEBUG: Password Mismatch")
+            # Log failed login attempt
+            db.log_activity(user['AccountID'], {
+                "FailedLoginCount": 1, 
+                "Description": "Failed login attempt (Wrong password)",
+                "SessionID": "SES-LOGIN-FAIL"
+            }, risk_score=50)
             
     return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
@@ -80,6 +86,12 @@ def change_password():
     success, msg = db.update_password(account_id, old_pass, new_pass)
     
     if success:
+        # Log successful password change
+        db.log_activity(account_id, {
+            "PasswordChanged": 1,
+            "Description": "User successfully changed password",
+            "SessionID": "SES-PASS-CHANGE"
+        }, risk_score=10)
         return jsonify({"status": "success", "message": msg})
     return jsonify({"status": "error", "message": msg}), 400
 @app.route('/api/user/dashboard/<account_id>', methods=['GET'])
@@ -139,6 +151,7 @@ def transfer():
         "TransactionType": "Debit", 
         "Description": f"Transfer to ACC: {recipient_acc} (IFSC: {recipient_ifsc})",
         "SessionID": data.get('session_id', 'SES-UNKNOWN'),
+        "SessionDuration": data.get('session_duration', 0),
         "LargeTransaction": 1 if amount > 10000 else 0,
         "DeviceTrustScore": 85 # Mock positive score
     }
@@ -184,6 +197,7 @@ def deposit():
             "TransactionType": "Credit", 
             "Description": f"Deposit via {source}",
             "SessionID": data.get('session_id', 'SES-DEPOSIT'),
+            "SessionDuration": data.get('session_duration', 0),
             "LargeTransaction": 1 if amount > 50000 else 0,
             "DeviceTrustScore": 95 # Deposits are highly trusted
         }

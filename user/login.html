@@ -204,7 +204,8 @@
                 localStorage.setItem('userSession', JSON.stringify({
                     username: username,
                     account_id: result.account_id,
-                    full_name: result.full_name
+                    full_name: result.full_name,
+                    login_time: Date.now()
                 }));
                 // Display success message briefly before redirect
                 statusMessage.className = 'message success';

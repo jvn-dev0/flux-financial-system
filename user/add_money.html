@@ -316,13 +316,16 @@
             loader.style.display = 'flex';
 
             try {
+                const sessionDuration = sessionParams.login_time ? Math.floor((Date.now() - sessionParams.login_time) / 1000) : 0;
+                
                 const response = await fetch('/api/transaction/deposit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         account_id: accountID,
                         amount: amount,
-                        source: source
+                        source: source,
+                        session_duration: sessionDuration
                     })
                 });
 
