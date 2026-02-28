@@ -234,41 +234,58 @@ class DatabaseManager:
     # --- LOGGING & RISK ---
     def log_activity(self, account_id, activity_data, risk_score):
         df = self._load_sheet('ActivityLogs')
+        now = datetime.now()
         
-        # Calculate Rapid Transactions
+        # Calculate RapidTransactions - flagged if last log < 60 seconds ago
         rapid_transactions = 0
         if not df.empty and 'AccountID' in df.columns and 'Timestamp' in df.columns:
             user_logs = df[df['AccountID'] == account_id]
             if not user_logs.empty:
-                last_log = user_logs.iloc[-1]
-                last_time_str = str(last_log['Timestamp'])
                 try:
-                    last_time = datetime.strptime(last_time_str, "%Y-%m-%d %H:%M:%S")
-                    current_time = datetime.now()
-                    if (current_time - last_time).total_seconds() < 60:
+                    last_time = datetime.strptime(str(user_logs.iloc[-1]['Timestamp']), "%Y-%m-%d %H:%M:%S")
+                    if (now - last_time).total_seconds() < 60:
                         rapid_transactions = 1
                 except Exception:
                     pass
 
+        # Derive ML Fields from activity_data or use safe defaults
+        tx_amount = float(activity_data.get('TransactionAmount', 0))
+        
         new_log = {
-            "LogID": f"LOG-{len(df) + 1}",
-            "AccountID": account_id,
-            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "CyberRiskScore": risk_score,
-            "RapidTransactions": rapid_transactions
+            # Core identifiers
+            "LogID":               f"LOG-{len(df) + 1}",
+            "AccountID":           account_id,
+            "Timestamp":           now.strftime("%Y-%m-%d %H:%M:%S"),
+
+            # Transaction info
+            "TransactionType":     activity_data.get('TransactionType', 'Login'),
+            "Description":         activity_data.get('Description', ''),
+            "SessionID":           activity_data.get('SessionID', f'SES-{account_id}-{int(now.timestamp())}'),
+            "TransactionAmount":   tx_amount,
+
+            # Session & Behavioral ML Columns
+            "SessionDuration":     activity_data.get('SessionDuration', 0),
+            "LoginHour":           now.hour,
+            "FailedLoginCount":    activity_data.get('FailedLoginCount', 0),
+            "NewDeviceLogin":      activity_data.get('NewDeviceLogin', 0),
+            "PasswordChanged":     activity_data.get('PasswordChanged', 0),
+            "Channel":             activity_data.get('Channel', 'Web'),
+            "PagesVisited":        activity_data.get('PagesVisited', 1),
+            "ClickRate":           activity_data.get('ClickRate', 1),
+            "RapidTransactions":   rapid_transactions,
+            "BeneficiaryAdded":    activity_data.get('BeneficiaryAdded', 0),
+
+            # Risk Indicators
+            "LargeTransaction":    1 if tx_amount > 10000 else 0,
+            "DeviceTrustScore":    activity_data.get('DeviceTrustScore', 0.9),
+            "CyberRiskScore":      risk_score,
+            "RiskLabel":           1 if risk_score > 65 else 0,
         }
-        
-        # Merge basic activity data (SessionID, Amount, etc.)
-        new_log.update(activity_data)
-        
-        # Fill missing columns with 0 or default to verify schema compliance
-        for col in df.columns:
-            if col not in new_log:
-                new_log[col] = 0
-                
+
         df = pd.concat([df, pd.DataFrame([new_log])], ignore_index=True)
         self._save_sheet(df, 'ActivityLogs')
         return True
+
 
     def get_recent_activity(self, account_id, limit=5):
         df = self._load_sheet('ActivityLogs')
