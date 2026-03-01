@@ -320,7 +320,7 @@
             if (account_number !== accConfirm) {
                 alert("Account numbers do not match!");
                 return;
-            }
+            } else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
 
             // Processing
             btn.disabled = true;

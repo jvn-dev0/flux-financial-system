@@ -72,8 +72,16 @@ def login():
                 "SessionID": "SES-LOGIN-FAIL"
             }, risk_score=50)
             
-    return jsonify({"status": "error", "message": "Invalid credentials"}), 401
-
+        return jsonify({"status": "error", "message": "Invalid credentials"}), 401
+    
+    # Username not found
+    print(f"DEBUG: Username '{username}' Not Found")
+    db.log_activity("UNKNOWN", {
+        "FailedLoginCount": 1, 
+        "Description": f"Failed login attempt (Unknown user: {username})",
+        "SessionID": "SES-LOGIN-FAIL"
+    }, risk_score=50)
+    
     return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
 @app.route('/api/auth/change-password', methods=['POST'])
@@ -152,6 +160,7 @@ def transfer():
         "Description": f"Transfer to ACC: {recipient_acc} (IFSC: {recipient_ifsc})",
         "SessionID": data.get('session_id', 'SES-UNKNOWN'),
         "SessionDuration": data.get('session_duration', 0),
+        "PagesVisited": data.get('pages_visited', 1),
         "LargeTransaction": 1 if amount > 10000 else 0,
         "DeviceTrustScore": 85 # Mock positive score
     }
@@ -198,6 +207,7 @@ def deposit():
             "Description": f"Deposit via {source}",
             "SessionID": data.get('session_id', 'SES-DEPOSIT'),
             "SessionDuration": data.get('session_duration', 0),
+            "PagesVisited": data.get('pages_visited', 1),
             "LargeTransaction": 1 if amount > 50000 else 0,
             "DeviceTrustScore": 95 # Deposits are highly trusted
         }

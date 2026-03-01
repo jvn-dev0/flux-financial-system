@@ -374,7 +374,7 @@
             if(!document.getElementById('fileInput').files[0]) {
                 alert("Please upload a document.");
                 return;
-            }
+            } else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
 
             // Provide immediate feedback
             btn.disabled = true;

@@ -399,7 +399,7 @@
             if (!session) {
                 window.location.href = 'login.html';
                 return;
-            }
+            } else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
 
             document.getElementById('transferForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -443,7 +443,8 @@
                             recipient_account: receiverAcc,
                             recipient_ifsc: ifscCode,
                             session_id: 'SES-' + Math.floor(Math.random() * 100000),
-                            session_duration: sessionDuration
+                            session_duration: sessionDuration,
+                            pages_visited: session.pages_visited
                         })
                     });
 

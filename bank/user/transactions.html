@@ -373,7 +373,7 @@
             if (!data || data.length === 0) {
                 empty.style.display = 'block';
                 return;
-            }
+            } else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
             empty.style.display = 'none';
 
             data.forEach(tx => {
