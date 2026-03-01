@@ -158,12 +158,7 @@ def transfer():
         "TransactionAmount": amount,
         "TransactionType": "Debit", 
         "Description": f"Transfer to ACC: {recipient_acc} (IFSC: {recipient_ifsc})",
-        "SessionID": data.get('session_id', 'SES-UNKNOWN'),
-        "SessionDuration": data.get('session_duration', 0),
-        "PagesVisited": data.get('pages_visited', 1),
-        "ClickRate": data.get('click_rate', 0),
-        "LargeTransaction": 1 if amount > 10000 else 0,
-        "DeviceTrustScore": 85 # Mock positive score
+        "SessionID": data.get('session_id', 'SES-UNKNOWN')
     }
     db.log_activity(sender_id, log_data_sender, risk_score)
 
@@ -175,9 +170,7 @@ def transfer():
         "TransactionAmount": amount,
         "TransactionType": "Credit", 
         "Description": f"Transfer from {sender_name}",
-        "SessionID": data.get('session_id', 'SES-UNKNOWN'),
-        "LargeTransaction": 1 if amount > 10000 else 0,
-        "DeviceTrustScore": 85 # Mock positive score
+        "SessionID": data.get('session_id', 'SES-UNKNOWN')
     }
     db.log_activity(recipient_id_or_msg, log_data_recipient, 10) # Risk for receiving is low
     
@@ -206,12 +199,7 @@ def deposit():
             "TransactionAmount": amount,
             "TransactionType": "Credit", 
             "Description": f"Deposit via {source}",
-            "SessionID": data.get('session_id', 'SES-DEPOSIT'),
-            "SessionDuration": data.get('session_duration', 0),
-            "PagesVisited": data.get('pages_visited', 1),
-            "ClickRate": data.get('click_rate', 0),
-            "LargeTransaction": 1 if amount > 50000 else 0,
-            "DeviceTrustScore": 95 # Deposits are highly trusted
+            "SessionID": data.get('session_id', 'SES-DEPOSIT')
         }
         # Deposits are generally low risk, but large ones might be noted
         risk_score = 10 

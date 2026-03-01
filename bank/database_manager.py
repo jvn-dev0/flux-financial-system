@@ -235,27 +235,11 @@ class DatabaseManager:
     def log_activity(self, account_id, activity_data, risk_score):
         df = self._load_sheet('ActivityLogs')
         
-        # Calculate Rapid Transactions
-        rapid_transactions = 0
-        if not df.empty and 'AccountID' in df.columns and 'Timestamp' in df.columns:
-            user_logs = df[df['AccountID'] == account_id]
-            if not user_logs.empty:
-                last_log = user_logs.iloc[-1]
-                last_time_str = str(last_log['Timestamp'])
-                try:
-                    last_time = datetime.strptime(last_time_str, "%Y-%m-%d %H:%M:%S")
-                    current_time = datetime.now()
-                    if (current_time - last_time).total_seconds() < 60:
-                        rapid_transactions = 1
-                except Exception:
-                    pass
-
         new_log = {
             "LogID": f"LOG-{len(df) + 1}",
             "AccountID": account_id,
             "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "CyberRiskScore": risk_score,
-            "RapidTransactions": rapid_transactions
+            "CyberRiskScore": risk_score
         }
         
         # Merge basic activity data (SessionID, Amount, etc.)
