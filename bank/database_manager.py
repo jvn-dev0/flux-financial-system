@@ -268,6 +268,32 @@ class DatabaseManager:
                 
         df = pd.concat([df, pd.DataFrame([new_log])], ignore_index=True)
         self._save_sheet(df, 'ActivityLogs')
+
+        # --- Write targeted subset to ML_Features ---
+        try:
+            ml_df = self._load_sheet('ML_Features')
+            ml_columns = [
+                'LoginHour', 'FailedLoginCount', 'NewDeviceLogin', 'PasswordChanged', 'Channel', 
+                'SessionDuration', 'PagesVisited', 'ClickRate', 'RapidTransactions', 'BeneficiaryAdded', 
+                'CyberRiskScore', 'DeviceTrustScore', 'RiskLabel'
+            ]
+            
+            ml_row = {}
+            for col in ml_columns:
+                if col in new_log:
+                    ml_row[col] = new_log[col]
+                else:
+                    ml_row[col] = 0 # Fallback 
+            
+            # Explicitly set LoginHour based on correct live time if missing
+            if 'LoginHour' not in activity_data:
+                ml_row['LoginHour'] = datetime.now().hour
+                
+            ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
+            self._save_sheet(ml_df, 'ML_Features')
+        except Exception as e:
+            print(f"DEBUG: Failed to write to ML_Features: {e}")
+
         return True
 
     def get_recent_activity(self, account_id, limit=5):
