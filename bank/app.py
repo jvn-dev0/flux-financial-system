@@ -161,6 +161,7 @@ def transfer():
         "SessionID": data.get('session_id', 'SES-UNKNOWN'),
         "SessionDuration": data.get('session_duration', 0),
         "PagesVisited": data.get('pages_visited', 1),
+        "ClickRate": data.get('click_rate', 0),
         "LargeTransaction": 1 if amount > 10000 else 0,
         "DeviceTrustScore": 85 # Mock positive score
     }
@@ -208,6 +209,7 @@ def deposit():
             "SessionID": data.get('session_id', 'SES-DEPOSIT'),
             "SessionDuration": data.get('session_duration', 0),
             "PagesVisited": data.get('pages_visited', 1),
+            "ClickRate": data.get('click_rate', 0),
             "LargeTransaction": 1 if amount > 50000 else 0,
             "DeviceTrustScore": 95 # Deposits are highly trusted
         }

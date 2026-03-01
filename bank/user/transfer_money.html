@@ -399,7 +399,24 @@
             if (!session) {
                 window.location.href = 'login.html';
                 return;
-            } else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
+            }
+
+        // Initialize Click Tracking for ML
+        if (!session.total_clicks) session.total_clicks = 0;
+        if (!session.session_start_ms) session.session_start_ms = Date.now();
+        
+        document.body.addEventListener('click', () => {
+            session.total_clicks++;
+            localStorage.setItem('userSession', JSON.stringify(session));
+        });
+        
+        // Calculate Clicks Per Minute dynamically
+        function getClickRate() {
+            const elapsedMinutes = (Date.now() - session.session_start_ms) / 60000;
+            if (elapsedMinutes < 0.1) return session.total_clicks; // Return raw clicks if very short session
+            return parseFloat((session.total_clicks / elapsedMinutes).toFixed(2));
+        }
+ else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
 
             document.getElementById('transferForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -444,7 +461,8 @@
                             recipient_ifsc: ifscCode,
                             session_id: 'SES-' + Math.floor(Math.random() * 100000),
                             session_duration: sessionDuration,
-                            pages_visited: session.pages_visited
+                            pages_visited: session.pages_visited,
+                            click_rate: getClickRate()
                         })
                     });
 
