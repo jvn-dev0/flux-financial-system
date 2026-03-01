@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberLens Admin - Reports & Audits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a4d8c;
+            --sidebar-blue: #2c7da0;
+            --sidebar-dark: #1e5f7e;
+            --light-bg: #f5f7fa;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --border-color: #e0e0e0;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (Standard) */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--sidebar-blue) 0%, var(--sidebar-dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon { font-size: 1.5rem; color: var(--white); }
+        .logo-text { font-size: 1.2rem; font-weight: 700; }
+
+        .nav-links { list-style: none; padding: 1rem 0; flex: 1; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1rem 1.5rem; cursor: pointer;
+            transition: background 0.2s; color: rgba(255,255,255,0.8);
+            text-decoration: none; font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border-left: 4px solid var(--white);
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 90;
+        }
+
+        .page-title { font-size: 1.2rem; font-weight: 500; color: var(--text-dark); }
+        .admin-profile { display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--primary-blue); }
+
+        .dashboard-body {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .date-picker {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-dark);
+            margin-left: 10px;
+        }
+
+        .btn-export {
+            padding: 10px 20px;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-export:hover { opacity: 0.9; }
+
+        /* Report Table */
+        .report-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--text-dark); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem 1.5rem; text-align: left; font-size: 0.9rem; }
+        th { background: #f8f9fa; color: var(--text-light); font-weight: 600; border-bottom: 1px solid var(--border-color); }
+        td { border-bottom: 1px solid #f0f0f0; color: var(--text-dark); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #fafafa; }
+
+        .action-badge {
+            padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;
+        }
+        .ab-blocked { background: #ffebee; color: var(--danger); }
+        .ab-dismissed { background: #e3f2fd; color: var(--primary-blue); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-alt logo-icon"></i>
+            <div class="logo-text">CyberLens<br><span style="font-size:0.8rem; font-weight:400; opacity:0.8;">Admin Portal</span></div>
+        </div>
+        
+        <ul class="nav-links">
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="user_management.html" class="nav-item"><i class="fas fa-users-cog"></i> User Monitor</a>
+            <a href="transaction_monitor.html" class="nav-item"><i class="fas fa-exchange-alt"></i> Live Transactions</a>
+            <a href="risk_alerts.html" class="nav-item"><i class="fas fa-bell"></i> Risk Alerts</a>
+            <a href="kyc_approval.html" class="nav-item"><i class="fas fa-id-card"></i> KYC Requests</a>
+            <a href="#" class="nav-item active"><i class="fas fa-chart-bar"></i> Reports</a>
+        </ul>
+
+        <a href="login.html" class="nav-item" onclick="localStorage.removeItem('adminSession')" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <div class="page-title">Reports & Audit Logs</div>
+            <div class="admin-profile">
+                <i class="fas fa-user-shield"></i> Administrator
+            </div>
+        </header>
+
+        <div class="dashboard-body">
+            
+            <!-- Controls -->
+            <div class="controls-panel">
+                <div>
+                    <span style="font-weight:500; color:var(--text-light);">Report Period:</span>
+                    <input type="date" class="date-picker">
+                    <span style="margin:0 10px;">to</span>
+                    <input type="date" class="date-picker">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-export" style="background:var(--white); color:var(--text-dark); border:1px solid var(--border-color);"><i class="fas fa-file-csv"></i> CSV</button>
+                    <button class="btn-export"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                </div>
+            </div>
+
+            <!-- Audit Table -->
+            <div class="report-card">
+                <div class="card-header">
+                    <div class="card-title">Security Action Log</div>
+                    <div style="font-size:0.9rem; color:var(--text-light);">Showing recent actions</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Admin User</th>
+                            <th>Action Type</th>
+                            <th>Target Customer</th>
+                            <th>Details Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-body">
+                        <!-- JS Populated -->
+                    </tbody>
+                </table>
+                <div id="empty-log" style="text-align:center; padding:3rem; display:none;">
+                    <p style="color:#888;">No audit logs found.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Check Auth
+        if(!localStorage.getItem('adminSession')) {
+            window.location.href = 'login.html';
+        }
+
+        // --- POPULATE LOGS FROM API ---
+        async function loadLogs() {
+            try {
+                const response = await fetch('/api/admin/logs');
+                const data = await response.json();
+                renderTable(data.logs || []);
+            } catch (error) {
+                console.error("Failed to fetch logs", error);
+            }
+        }
+        
+        loadLogs();
+
+        const tbody = document.getElementById('audit-body');
+        const emptyMsg = document.getElementById('empty-log');
+
+        function renderTable(history) {
+            if(history.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                tbody.innerHTML = '';
+                
+                history.forEach(h => {
+                    const tr = document.createElement('tr');
+                    let badgeClass = '';
+                    let details = h.Description;
+                    let type = 'System';
+                    
+                    if(h.Description.includes('Blocked')) {
+                        badgeClass = 'ab-blocked';
+                        type = 'Blocked';
+                    } else if (h.Description.includes('Dismissed')) {
+                        badgeClass = 'ab-dismissed';
+                        type = 'Dismissed';
+                    } else {
+                        badgeClass = 'ab-dismissed'; // Default style
+                    }
+
+                    tr.innerHTML = `
+                        <td>${h.Timestamp}</td>
+                        <td>Administrator</td>
+                        <td><span class="action-badge ${badgeClass}">${type}</span></td>
+                        <td><b>${h.AccountID}</b></td>
+                        <td>${details}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>
