@@ -245,12 +245,24 @@ class DatabaseManager:
         # Merge basic activity data (SessionID, Amount, etc.)
         new_log.update(activity_data)
         
+        # Filter out ML-specific metrics to completely safeguard ActivityLogs
+        ml_only_cols = ['FailedLoginCount', 'BeneficiaryAdded', 'account', 'ClickRate', 'PagesVisited', 
+                        'LoginHour', 'RapidTransactions', 'NewDeviceLogin', 'PasswordChanged', 'Channel', 
+                        'SessionDuration', 'DeviceTrustScore', 'RiskLabel']
+        activity_row = {k: v for k, v in new_log.items() if k not in ml_only_cols}
+        
         # Fill missing columns with 0 or default to verify schema compliance
         for col in df.columns:
-            if col not in new_log:
-                new_log[col] = 0
+            if col not in activity_row:
+                activity_row[col] = 0
                 
-        df = pd.concat([df, pd.DataFrame([new_log])], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame([activity_row])], ignore_index=True)
+        
+        # Extra safety measure: drop rogue columns if the DataFrame inherited them
+        for drop_col in ml_only_cols:
+            if drop_col in df.columns:
+                df = df.drop(columns=[drop_col])
+                
         self._save_sheet(df, 'ActivityLogs')
 
         # --- Write targeted subset to ML_Features ---
