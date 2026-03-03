@@ -269,15 +269,31 @@ class DatabaseManager:
         try:
             ml_df = self._load_sheet('ML_Features')
             ml_columns = [
-                'LoginHour', 'FailedLoginCount', 'NewDeviceLogin', 'PasswordChanged', 'Channel', 
-                'SessionDuration', 'PagesVisited', 'ClickRate', 'RapidTransactions', 'BeneficiaryAdded', 
-                'CyberRiskScore', 'DeviceTrustScore', 'RiskLabel'
+                'AccountBalance', 'KYCStatus', 'TransactionType', 'TransactionAmount', 
+                'SessionDuration', 'LoginHour', 'FailedLoginCount', 'NewDeviceLogin', 
+                'PasswordChanged', 'Channel', 'PagesVisited', 'ClickRate', 
+                'RapidTransactions', 'BeneficiaryAdded', 'LargeTransaction', 
+                'DeviceTrustScore', 'CyberRiskScore'
             ]
+            
+            # Fetch user context for base features
+            user_info = self.get_user_by_id(account_id) or {}
             
             ml_row = {}
             for col in ml_columns:
                 if col in new_log:
                     ml_row[col] = new_log[col]
+                elif col == 'TransactionAmount' and 'TransactionAmount' not in new_log:
+                    ml_row[col] = 0
+                elif col == 'TransactionType' and 'TransactionType' not in new_log:
+                    ml_row[col] = 'Transfer' # Default safe fallback
+                elif col == 'AccountBalance':
+                    ml_row[col] = user_info.get('AccountBalance', 0)
+                elif col == 'KYCStatus':
+                    ml_row[col] = user_info.get('KYCStatus', 'Verified') # Cannot predict effectively on '0'
+                elif col == 'LargeTransaction':
+                    amt = new_log.get('TransactionAmount', 0)
+                    ml_row[col] = 1 if amt > 100000 else 0
                 else:
                     ml_row[col] = 0 # Fallback 
             
