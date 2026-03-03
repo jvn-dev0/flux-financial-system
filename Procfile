@@ -1,1 +1,1 @@
-web: gunicorn bank.app:app
+web: gunicorn --chdir bank app:app
