@@ -413,10 +413,13 @@
         // Calculate Clicks Per Minute dynamically
         function getClickRate() {
             const elapsedMinutes = (Date.now() - session.session_start_ms) / 60000;
-            if (elapsedMinutes < 0.1) return session.total_clicks; // Return raw clicks if very short session
+            if (elapsedMinutes < 0.1) return session.total_clicks;
             return parseFloat((session.total_clicks / elapsedMinutes).toFixed(2));
         }
- else { session.pages_visited = (session.pages_visited || 1) + 1; localStorage.setItem('userSession', JSON.stringify(session)); }
+
+        // Track unique page visits
+        session.pages_visited = (session.pages_visited || 0) + 1;
+        localStorage.setItem('userSession', JSON.stringify(session));
 
             document.getElementById('transferForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
