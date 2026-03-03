@@ -158,7 +158,14 @@ def transfer():
         "TransactionAmount": amount,
         "TransactionType": "Debit", 
         "Description": f"Transfer to ACC: {recipient_acc} (IFSC: {recipient_ifsc})",
-        "SessionID": data.get('session_id', 'SES-UNKNOWN')
+        "SessionID": data.get('session_id', 'SES-UNKNOWN'),
+        "ClickRate": data.get('click_rate', 0),
+        "PagesVisited": data.get('pages_visited', 1),
+        "SessionDuration": data.get('session_duration', 0),
+        "DeviceTrustScore": data.get('device_trust_score', 100),
+        "Channel": data.get('channel', 'Web'),
+        "NewDeviceLogin": data.get('new_device_login', 0),
+        "RapidTransactions": data.get('rapid_transactions', 0)
     }
     db.log_activity(sender_id, log_data_sender, risk_score)
 
@@ -199,7 +206,14 @@ def deposit():
             "TransactionAmount": amount,
             "TransactionType": "Credit", 
             "Description": f"Deposit via {source}",
-            "SessionID": data.get('session_id', 'SES-DEPOSIT')
+            "SessionID": data.get('session_id', 'SES-DEPOSIT'),
+            "ClickRate": data.get('click_rate', 0),
+            "PagesVisited": data.get('pages_visited', 1),
+            "SessionDuration": data.get('session_duration', 0),
+            "DeviceTrustScore": data.get('device_trust_score', 100),
+            "Channel": data.get('channel', 'Web'),
+            "NewDeviceLogin": data.get('new_device_login', 0),
+            "RapidTransactions": data.get('rapid_transactions', 0)
         }
         # Deposits are generally low risk, but large ones might be noted
         risk_score = 10 
