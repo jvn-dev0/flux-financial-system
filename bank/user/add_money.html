@@ -326,8 +326,8 @@
                         amount: amount,
                         source: source,
                         session_duration: sessionDuration,
-                            pages_visited: session.pages_visited,
-                            click_rate: getClickRate()
+                        pages_visited: sessionParams.pages_visited || 1,
+                        click_rate: 0 // Mock telemetry until click tracker is imported
                     })
                 });
 
