@@ -2,10 +2,12 @@ import gspread
 import os
 import pandas as pd
 from datetime import datetime
+import pytz
 from oauth2client.service_account import ServiceAccountCredentials
 
-DB_FILE = "flux_financial_database.xlsx"
-CREDENTIALS_FILE = "credentials.json"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_FILE = os.path.join(BASE_DIR, "flux_financial_database.xlsx")
+CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
 GOOGLE_SHEET_ID = "1f4Qk6s50pDmRMyH7pMXzPqKk6Jp7VaTPHRfNTIxk8Eg" # User provided ID
 
 class DatabaseManager:
@@ -14,6 +16,10 @@ class DatabaseManager:
         self.use_cloud = False
         self.gc = None
         self.sh = None
+        
+        self._cache = {}
+        self._cache_time = {}
+        self.CACHE_TTL = 15 # Fetch from Google Sheets max every 15 seconds
         
         # Try to connect to Google Sheets
         creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
@@ -62,21 +68,53 @@ class DatabaseManager:
                 raise FileNotFoundError(f"Database file {self.db_file} not found. Run create_user_excel.py first.")
 
     def _load_sheet(self, sheet_name):
+        import time
+        current_time = time.time()
+        
+        # Serve from fast local cache if under TTL
+        if sheet_name in self._cache and (current_time - self._cache_time.get(sheet_name, 0)) < self.CACHE_TTL:
+            return self._cache[sheet_name].copy()
+
         if self.use_cloud:
             try:
                 ws = self.sh.worksheet(sheet_name)
                 data = ws.get_all_records()
                 if not data:
                     headers = ws.row_values(1)
-                    return pd.DataFrame(columns=headers)
-                return pd.DataFrame(data)
+                    df = pd.DataFrame(columns=headers)
+                else:
+                    df = pd.DataFrame(data)
+                
+                # Update Cache
+                self._cache[sheet_name] = df.copy()
+                self._cache_time[sheet_name] = current_time
+                return df
+                
             except gspread.WorksheetNotFound:
-                 # Return empty DF with correct columns if possible, but safer to error or default
                  return pd.DataFrame() 
+            except Exception as e:
+                print(f"Error loading sheet {sheet_name}: {e}")
+                # Fallback to expired cache if Google API rate limits us
+                if sheet_name in self._cache:
+                    return self._cache[sheet_name].copy()
+                return pd.DataFrame() 
         else:
-            return pd.read_excel(self.db_file, sheet_name=sheet_name, engine='openpyxl')
+            try:
+                df = pd.read_excel(self.db_file, sheet_name=sheet_name, engine='openpyxl')
+                self._cache[sheet_name] = df.copy()
+                self._cache_time[sheet_name] = current_time
+                return df
+            except Exception:
+                if sheet_name in self._cache:
+                    return self._cache[sheet_name].copy()
+                return pd.DataFrame()
 
     def _save_sheet(self, df, sheet_name):
+        import time
+        # Instantly update local cache whenever we save, ensuring it's never stale
+        self._cache[sheet_name] = df.copy()
+        self._cache_time[sheet_name] = time.time()
+        
         if self.use_cloud:
             try:
                 try:
@@ -235,10 +273,13 @@ class DatabaseManager:
     def log_activity(self, account_id, activity_data, risk_score):
         df = self._load_sheet('ActivityLogs')
         
+        ist = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(ist)
+        
         new_log = {
             "LogID": f"LOG-{len(df) + 1}",
             "AccountID": account_id,
-            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Timestamp": current_time.strftime("%Y-%m-%d %H:%M:%S"),
             "CyberRiskScore": risk_score
         }
         
@@ -299,7 +340,8 @@ class DatabaseManager:
             
             # Explicitly set LoginHour based on correct live time if missing
             if 'LoginHour' not in activity_data:
-                ml_row['LoginHour'] = datetime.now().hour
+                ist = pytz.timezone('Asia/Kolkata')
+                ml_row['LoginHour'] = datetime.now(ist).hour
                 
             ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
             self._save_sheet(ml_df, 'ML_Features')
@@ -312,12 +354,17 @@ class DatabaseManager:
         df = self._load_sheet('ActivityLogs')
         if 'AccountID' not in df.columns: return [] # Handle empty case
         user_logs = df[df['AccountID'] == account_id].sort_values(by='Timestamp', ascending=False)
+        if 'Description' in user_logs.columns:
+            user_logs = user_logs[~user_logs['Description'].astype(str).str.contains('login', case=False, na=False)]
         return user_logs.head(limit).to_dict('records')
 
     def get_user_transactions(self, account_id):
         df = self._load_sheet('ActivityLogs')
         if 'AccountID' not in df.columns: return []
         user_logs = df[df['AccountID'] == account_id].sort_values(by='Timestamp', ascending=False)
+        
+        if 'Description' in user_logs.columns:
+            user_logs = user_logs[~user_logs['Description'].astype(str).str.contains('login', case=False, na=False)]
         
         # Ensure optional columns exist for clean frontend
         if 'Description' not in user_logs.columns: user_logs['Description'] = 'Transaction'
@@ -463,4 +510,14 @@ class DatabaseManager:
                 self._save_sheet(users_df, 'Users')
                 return True, f"KYC {new_status}"
                 
+        return False, "User not found"
+
+    def update_user_status(self, account_id, new_status):
+        users_df = self._load_sheet('Users')
+        if 'AccountID' in users_df.columns:
+            idx = users_df[users_df['AccountID'] == account_id].index
+            if not idx.empty:
+                users_df.at[idx[0], 'Status'] = new_status
+                self._save_sheet(users_df, 'Users')
+                return True, f"User status set to {new_status}"
         return False, "User not found"
