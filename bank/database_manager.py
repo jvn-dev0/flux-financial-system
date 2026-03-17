@@ -31,7 +31,23 @@ class DatabaseManager:
             if creds_json:
                 # Load from Environment Variable (Render / Production)
                 import json
-                creds_dict = json.loads(creds_json)
+                # Handle potential triple-escaped quotes or formatting issues from Render env vars
+                try:
+                    creds_dict = json.loads(creds_json, strict=False)
+                except json.JSONDecodeError:
+                    # Fallback if Render wraps the whole thing in single quotes or double escapes it
+                    import ast
+                    try:
+                        creds_dict = ast.literal_eval(creds_json)
+                    except:
+                        # Attempt to fix the string before loading
+                        fixed_json = creds_json.replace("'", '"').replace('\n', '')
+                        creds_dict = json.loads(fixed_json, strict=False)
+
+                # Fix for environment variables escaping the newlines in the private key
+                if 'private_key' in creds_dict:
+                    creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+                    
                 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
                 print("--- LOADED CREDENTIALS FROM ENVIRONMENT VARIABLE ---")
             elif os.path.exists(CREDENTIALS_FILE):
