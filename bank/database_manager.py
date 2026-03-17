@@ -170,10 +170,11 @@ class DatabaseManager:
         
         # Check if username exists (Case Insensitive)
         # Convert column to string and lower for comparison
-        existing_users = df['Username'].astype(str).str.lower().values
-        if str(username).lower() in existing_users:
-            print(f"DEBUG: Username '{username}' already exists.")
-            return False, "Username already exists"
+        if not df.empty and 'Username' in df.columns:
+            existing_users = df['Username'].astype(str).str.lower().values
+            if str(username).lower() in existing_users:
+                print(f"DEBUG: Username '{username}' already exists.")
+                return False, "Username already exists"
 
         # Generate IDs
         new_id = f"AC{len(df) + 1001}"
@@ -197,7 +198,7 @@ class DatabaseManager:
             "Password": str(password), # Force String
             "FullName": full_name,
             "Email": email,
-            "Phone": phone,
+            "Phone": str(phone), # Force string to prevent pandas type errors
             "AccountBalance": 0.0, # Start with 0
             "KYCStatus": "Not Started",
             "CreatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -205,8 +206,13 @@ class DatabaseManager:
         
         print(f"DEBUG: Creating User: {new_user}")
         
-        # Use simple concat
-        df = pd.concat([df, pd.DataFrame([new_user])], ignore_index=True)
+        # Use simple concat, safe for empty dataframes
+        new_row_df = pd.DataFrame([new_user])
+        if df.empty:
+            df = new_row_df
+        else:
+            df = pd.concat([df, new_row_df], ignore_index=True)
+            
         self._save_sheet(df, 'Users')
         return True, new_user
 
