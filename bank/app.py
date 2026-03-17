@@ -284,6 +284,156 @@ def get_kyc_status(account_id):
     return jsonify({"status": "success", "kyc_status": status})
 
 
+# =============================================================================
+# ADMIN ROUTES (merged here so Render serves them from the same process)
+# =============================================================================
+
+ADMIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'admin')
+
+@app.route('/admin')
+@app.route('/admin/')
+def admin_index():
+    return send_from_directory(ADMIN_DIR, 'login.html')
+
+@app.route('/admin/<path:path>')
+def serve_admin(path):
+    return send_from_directory(ADMIN_DIR, path)
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    if username == 'admin' and password == 'admin123':
+        return jsonify({"status": "success", "admin_id": "ADM-001", "name": "Super Admin"})
+    return jsonify({"status": "error", "message": "Invalid admin credentials"}), 401
+
+@app.route('/api/admin/stats', methods=['GET'])
+def get_admin_stats():
+    def safe_float(val):
+        try:
+            return float(val) if str(val).strip() != '' else 0.0
+        except:
+            return 0.0
+
+    users = db.get_all_users()
+    transactions = db.get_all_transactions(limit=1000)
+
+    total_balance = sum(safe_float(u.get('AccountBalance', 0)) for u in users)
+    total_users = len(users)
+    pending_kyc = len(db.get_pending_kyc_requests())
+
+    tx_volume = sum(safe_float(t.get('TransactionAmount', 0)) for t in transactions if t.get('TransactionType') == 'Credit')
+
+    recent_tx = db.get_all_transactions(limit=200)
+    blocked_users = {str(u.get('AccountID')) for u in users if u.get('Status') == 'Blocked'}
+
+    flagged = 0
+    for t in recent_tx:
+        try:
+            if float(t.get('CyberRiskScore', 0)) > 75:
+                if str(t.get('AccountID')) not in blocked_users:
+                    flagged += 1
+        except:
+            pass
+
+    return jsonify({
+        "total_balance": total_balance,
+        "total_users": total_users,
+        "active_users": total_users,
+        "pending_kyc": pending_kyc,
+        "transaction_volume": tx_volume,
+        "flagged_transactions": flagged
+    })
+
+@app.route('/api/admin/transactions', methods=['GET'])
+def get_admin_transactions():
+    transactions = db.get_all_transactions(limit=100)
+    users = db.get_all_users()
+    blocked_users = {str(u.get('AccountID')) for u in users if u.get('Status') == 'Blocked'}
+
+    for t in transactions:
+        if str(t.get('AccountID')) in blocked_users:
+            t['CyberRiskScore'] = 0
+            if not str(t.get('Description', '')).startswith('[BLOCKED]'):
+                t['Description'] = "[BLOCKED] " + str(t.get('Description', ''))
+
+    return jsonify({"transactions": transactions})
+
+@app.route('/api/admin/users', methods=['GET'])
+def get_admin_users():
+    users = db.get_all_users()
+    return jsonify({"users": users})
+
+@app.route('/api/admin/user/<account_id>', methods=['GET'])
+def get_admin_user_analytics(account_id):
+    user = db.get_user_by_id(account_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    all_activity = db.get_user_transactions(account_id)
+    transfers = [log for log in all_activity if log.get('TransactionType') == 'Transfer']
+    total_spend = sum([float(log.get('TransactionAmount', 0)) for log in transfers])
+    avg_txn = total_spend / len(transfers) if len(transfers) > 0 else 0.0
+
+    try:
+        b_df = db._load_sheet('Beneficiaries')
+        ben_count = len(b_df[b_df['AccountID'] == account_id]) if not b_df.empty and 'AccountID' in b_df.columns else 0
+    except:
+        ben_count = 0
+
+    return jsonify({
+        "status": "success",
+        "total_spend": round(total_spend, 2),
+        "avg_transaction": round(avg_txn, 2),
+        "beneficiaries": ben_count,
+        "kyc_status": user.get('KYCStatus', 'Pending'),
+        "recent_activity": all_activity[:5]
+    })
+
+@app.route('/api/admin/action', methods=['POST'])
+def log_admin_action():
+    data = request.json
+    action = data.get('action')
+    account_id = data.get('account_id')
+
+    if account_id and account_id != '? (Live Stream)':
+        db.log_activity(account_id, {
+            "Description": f"Admin (ADM-001) {action} user {account_id}",
+            "TransactionType": "System"
+        }, risk_score=100 if action == 'Blocked' else 0)
+        if action == 'Blocked':
+            db.update_user_status(account_id, 'Blocked')
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/admin/logs', methods=['GET'])
+def get_admin_logs():
+    return jsonify({"logs": db.get_audit_logs()})
+
+@app.route('/api/admin/kyc-requests', methods=['GET'])
+def get_admin_pending_kyc():
+    reqs = db.get_pending_kyc_requests()
+    return jsonify({"requests": reqs})
+
+@app.route('/api/admin/kyc-update', methods=['POST'])
+def admin_update_kyc():
+    data = request.json
+    account_id = data.get('account_id')
+    new_status = data.get('status')
+
+    success, msg = db.update_kyc_status(account_id, new_status)
+    if success:
+        risk = 50 if new_status == 'Rejected' else 0
+        db.log_activity(account_id, {
+            "Description": f"Admin (ADM-001) {new_status.lower()} KYC for {account_id}",
+            "TransactionType": "System"
+        }, risk_score=risk)
+        return jsonify({"status": "success", "message": msg})
+    return jsonify({"status": "error", "message": msg}), 400
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
