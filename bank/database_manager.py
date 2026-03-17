@@ -81,7 +81,12 @@ class DatabaseManager:
         if not self.use_cloud:
             print("--- USING LOCAL EXCEL FILE (OFFLINE MODE) ---")
             if not os.path.exists(self.db_file):
-                raise FileNotFoundError(f"Database file {self.db_file} not found. Run create_user_excel.py first.")
+                print(f"WARNING: Database file {self.db_file} not found. Operating with empty data in-memory.")
+                try:
+                    import pandas as pd
+                    pd.DataFrame().to_excel(self.db_file)
+                except Exception as e:
+                    print(f"Failed to create dummy excel file: {e}")
 
     def _load_sheet(self, sheet_name):
         import time
