@@ -561,7 +561,10 @@
                 // Populate Recent Activity
                 const txContainer = document.getElementById('transactions-container');
                 
-                if (data.recent_activity.length === 0) {
+                // Filter out non-monetary transactions (like failed logins)
+                const realTransactions = data.recent_activity.filter(tx => tx.TransactionAmount && Math.abs(tx.TransactionAmount) > 0);
+                
+                if (realTransactions.length === 0) {
                     txContainer.innerHTML = `
                         <div class="empty-transactions">
                             <i class="fas fa-receipt" style="font-size:2rem; margin-bottom:1rem; opacity:0.3;"></i>
@@ -570,7 +573,7 @@
                         </div>`;
                 } else {
                     let html = '<ul class="trans-list">';
-                    data.recent_activity.forEach(tx => {
+                    realTransactions.forEach(tx => {
                         // Check TransactionType from backend
                         // Default to Debit if missing (for old data)
                         const isDebit = tx.TransactionType === 'Debit'; 

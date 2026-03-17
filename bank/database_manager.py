@@ -354,17 +354,12 @@ class DatabaseManager:
         df = self._load_sheet('ActivityLogs')
         if 'AccountID' not in df.columns: return [] # Handle empty case
         user_logs = df[df['AccountID'] == account_id].sort_values(by='Timestamp', ascending=False)
-        if 'Description' in user_logs.columns:
-            user_logs = user_logs[~user_logs['Description'].astype(str).str.contains('login', case=False, na=False)]
         return user_logs.head(limit).to_dict('records')
 
     def get_user_transactions(self, account_id):
         df = self._load_sheet('ActivityLogs')
         if 'AccountID' not in df.columns: return []
         user_logs = df[df['AccountID'] == account_id].sort_values(by='Timestamp', ascending=False)
-        
-        if 'Description' in user_logs.columns:
-            user_logs = user_logs[~user_logs['Description'].astype(str).str.contains('login', case=False, na=False)]
         
         # Ensure optional columns exist for clean frontend
         if 'Description' not in user_logs.columns: user_logs['Description'] = 'Transaction'

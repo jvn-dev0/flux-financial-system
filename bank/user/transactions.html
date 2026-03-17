@@ -348,7 +348,9 @@
                 const data = await response.json();
                 
                 // Map Backend Data to UI Format
-                allTransactions = (data.transactions || []).map(tx => ({
+                const rawTransactions = (data.transactions || []).filter(tx => tx.TransactionAmount && Math.abs(tx.TransactionAmount) > 0);
+                
+                allTransactions = rawTransactions.map(tx => ({
                     date: tx.Timestamp,
                     description: tx.Description || 'Transaction',
                     ref: tx.SessionID || 'REF-???',
