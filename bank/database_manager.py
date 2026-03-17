@@ -30,26 +30,33 @@ class DatabaseManager:
             
             if creds_json:
                 # Load from Environment Variable (Render / Production)
-                import json
-                # Handle potential triple-escaped quotes or formatting issues from Render env vars
+                import json, base64
+                
+                # First, try to decode as base64 (most reliable approach - no newline issues)
+                creds_dict = None
                 try:
-                    creds_dict = json.loads(creds_json, strict=False)
-                except json.JSONDecodeError:
-                    # Fallback if Render wraps the whole thing in single quotes or double escapes it
-                    import ast
+                    decoded = base64.b64decode(creds_json.strip()).decode('utf-8')
+                    creds_dict = json.loads(decoded)
+                    print("--- LOADED CREDENTIALS FROM BASE64 ENVIRONMENT VARIABLE ---")
+                except Exception:
+                    pass
+                
+                # Fallback: try parsing as raw JSON
+                if creds_dict is None:
                     try:
-                        creds_dict = ast.literal_eval(creds_json)
-                    except:
-                        # Attempt to fix the string before loading
-                        fixed_json = creds_json.replace("'", '"').replace('\n', '')
+                        creds_dict = json.loads(creds_json, strict=False)
+                    except json.JSONDecodeError:
+                        # Last resort: try fixing common escaping issues
+                        fixed_json = creds_json.strip().replace("'", '"')
                         creds_dict = json.loads(fixed_json, strict=False)
-
-                # Fix for environment variables escaping the newlines in the private key
-                if 'private_key' in creds_dict:
-                    creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+                    
+                    # Fix for Render escaping the newlines in the private key
+                    if creds_dict and 'private_key' in creds_dict:
+                        creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+                    print("--- LOADED CREDENTIALS FROM JSON ENVIRONMENT VARIABLE ---")
                     
                 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-                print("--- LOADED CREDENTIALS FROM ENVIRONMENT VARIABLE ---")
+                print("--- GOOGLE CREDENTIALS LOADED SUCCESSFULLY ---")
             elif os.path.exists(CREDENTIALS_FILE):
                 # Load from Local File (Development)
                 creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
