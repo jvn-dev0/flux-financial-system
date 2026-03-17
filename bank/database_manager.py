@@ -213,6 +213,11 @@ class DatabaseManager:
     def get_user(self, username):
         df = self._load_sheet('Users')
         
+        # Check if DB is completely empty (no columns)
+        if df.empty or 'Username' not in df.columns:
+            print(f"DEBUG: Login Failed - Database empty or missing Username column.")
+            return None
+        
         # Case Insensitive Lookup
         # We look for a row where Lower(Username) == Lower(Input)
         # But return the actual row data
