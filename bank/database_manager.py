@@ -392,9 +392,15 @@ class DatabaseManager:
                 if mask.any():
                     idx = ml_df[mask].index[-1]
                     # Update existing row
-                    ml_df.at[idx, 'FailedLoginCount'] = ml_df.at[idx, 'FailedLoginCount'] + ml_row['FailedLoginCount']
-                    ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], ml_row['CyberRiskScore'])
-                    print(f"DEBUG: Updated existing ML row for {account_id} (New count: {ml_df.at[idx, 'FailedLoginCount']})")
+                    total_fails = ml_df.at[idx, 'FailedLoginCount'] + ml_row['FailedLoginCount']
+                    ml_df.at[idx, 'FailedLoginCount'] = total_fails
+                    
+                    # Dynamically escalate the score based on the number of fails
+                    # 1: 50, 2: 65, 3: 80, 4: 95, 5+: 100
+                    escalated_score = min(100, 50 + (total_fails - 1) * 15)
+                    ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], escalated_score)
+                    
+                    print(f"DEBUG: Updated existing ML row for {account_id} (Fails: {total_fails}, New Score: {ml_df.at[idx, 'CyberRiskScore']})")
                 else:
                     ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
             else:
