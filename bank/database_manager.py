@@ -381,6 +381,7 @@ class DatabaseManager:
             ist = pytz.timezone('Asia/Kolkata')
             now_dt = datetime.now(ist)
             ml_row['LoginHour'] = now_dt.hour
+            ml_row['AccountID'] = account_id # CRITICAL: Add AccountID so it can be matched later
             
             # --- ROW UPDATING LOGIC FOR FAILED LOGINS ---
             # If this is a failed login, check if a row for this AccountID and LoginHour exists
