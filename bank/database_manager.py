@@ -377,12 +377,28 @@ class DatabaseManager:
                 else:
                     ml_row[col] = 0 # Fallback 
             
-            # Explicitly set LoginHour based on correct live time if missing
-            if 'LoginHour' not in activity_data:
-                ist = pytz.timezone('Asia/Kolkata')
-                ml_row['LoginHour'] = datetime.now(ist).hour
+            # Explicitly set LoginHour based on correct live time
+            ist = pytz.timezone('Asia/Kolkata')
+            now_dt = datetime.now(ist)
+            ml_row['LoginHour'] = now_dt.hour
+            
+            # --- ROW UPDATING LOGIC FOR FAILED LOGINS ---
+            # If this is a failed login, check if a row for this AccountID and LoginHour exists
+            # We look at the last 10 rows to see if we should 'update' instead of 'append'
+            if ml_row.get('FailedLoginCount', 0) > 0 and not ml_df.empty:
+                # Find the most recent record for this user in this hour
+                mask = (ml_df['AccountID'] == account_id) & (ml_df['LoginHour'] == ml_row['LoginHour'])
+                if mask.any():
+                    idx = ml_df[mask].index[-1]
+                    # Update existing row
+                    ml_df.at[idx, 'FailedLoginCount'] = ml_df.at[idx, 'FailedLoginCount'] + ml_row['FailedLoginCount']
+                    ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], ml_row['CyberRiskScore'])
+                    print(f"DEBUG: Updated existing ML row for {account_id} (New count: {ml_df.at[idx, 'FailedLoginCount']})")
+                else:
+                    ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
+            else:
+                ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
                 
-            ml_df = pd.concat([ml_df, pd.DataFrame([ml_row])], ignore_index=True)
             self._save_sheet(ml_df, 'ML_Features')
         except Exception as e:
             print(f"DEBUG: Failed to write to ML_Features: {e}")
@@ -427,11 +443,14 @@ class DatabaseManager:
 
     def get_all_transactions(self, limit=50):
         df = self._load_sheet('ActivityLogs')
+        if df.empty or 'Timestamp' not in df.columns:
+            return []
         # Sort by latest
         tx = df.sort_values(by='Timestamp', ascending=False).head(limit)
         
         # Ensure calculated columns exist
         if 'Description' not in tx.columns: tx['Description'] = 'Transaction'
+        if 'CyberRiskScore' not in tx.columns: tx['CyberRiskScore'] = 0
         
         return tx.to_dict('records')
 
