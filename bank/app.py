@@ -70,7 +70,7 @@ def login():
                 "FailedLoginCount": 1, 
                 "Description": "Failed login attempt (Wrong password)",
                 "SessionID": "SES-LOGIN-FAIL"
-            }, risk_score=50)
+            }, risk_score=0)
             
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
     
@@ -80,7 +80,7 @@ def login():
         "FailedLoginCount": 1, 
         "Description": f"Failed login attempt (Unknown user: {username})",
         "SessionID": "SES-LOGIN-FAIL"
-    }, risk_score=50)
+    }, risk_score=0)
     
     return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
