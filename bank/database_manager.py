@@ -396,8 +396,23 @@ class DatabaseManager:
                     ml_df.at[idx, 'FailedLoginCount'] = total_fails
                     
                     # Dynamically escalate the score based on the number of fails
-                    # 1: 50, 2: 65, 3: 80, 4: 95, 5+: 100
-                    escalated_score = min(100, 50 + (total_fails - 1) * 15)
+                    if total_fails <= 2:
+                        escalated_score = 0
+                    elif total_fails == 3:
+                        escalated_score = 20
+                    elif total_fails == 4:
+                        escalated_score = 40
+                    elif total_fails == 5:
+                        escalated_score = 60
+                    elif total_fails == 6:
+                        escalated_score = 75
+                    elif total_fails == 7:
+                        escalated_score = 85
+                    elif total_fails == 8:
+                        escalated_score = 95
+                    else:
+                        escalated_score = 100
+                    
                     ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], escalated_score)
                     
                     print(f"DEBUG: Updated existing ML row for {account_id} (Fails: {total_fails}, New Score: {ml_df.at[idx, 'CyberRiskScore']})")
