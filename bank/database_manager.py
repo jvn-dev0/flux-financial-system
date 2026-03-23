@@ -310,10 +310,36 @@ class DatabaseManager:
 
     # --- LOGGING & RISK ---
     def log_activity(self, account_id, activity_data, risk_score):
-        df = self._load_sheet('ActivityLogs')
+        # Default UI Values for missing ML metrics requested by User
+        activity_data.setdefault('Channel', 'Web')
+        activity_data.setdefault('SessionDuration', 120)
+        activity_data.setdefault('DeviceTrustScore', 98.5)
         
         ist = pytz.timezone('Asia/Kolkata')
         current_time = datetime.now(ist)
+        
+        # 0. Early Risk Escalation for Failed Logins so ActivityLogs gets the correct score
+        if activity_data.get('FailedLoginCount', 0) > 0:
+            try:
+                temp_ml = self._load_sheet('ML_Features')
+                if not temp_ml.empty:
+                    mask = (temp_ml['AccountID'] == account_id) & (temp_ml['LoginHour'] == current_time.hour)
+                    if mask.any():
+                        idx = temp_ml[mask].index[-1]
+                        total_fails = temp_ml.at[idx, 'FailedLoginCount'] + activity_data['FailedLoginCount']
+                        
+                        if total_fails <= 2: risk_score = 0
+                        elif total_fails == 3: risk_score = 20
+                        elif total_fails == 4: risk_score = 40
+                        elif total_fails == 5: risk_score = 60
+                        elif total_fails == 6: risk_score = 75
+                        elif total_fails == 7: risk_score = 85
+                        elif total_fails == 8: risk_score = 95
+                        else: risk_score = 100
+            except Exception:
+                pass
+
+        df = self._load_sheet('ActivityLogs')
         
         new_log = {
             "LogID": f"LOG-{len(df) + 1}",
@@ -325,10 +351,9 @@ class DatabaseManager:
         # Merge basic activity data (SessionID, Amount, etc.)
         new_log.update(activity_data)
         
-        # Filter out ML-specific metrics to completely safeguard ActivityLogs
+        # Filter out purely internal ML metrics. User explicitly requested Channel, SessionDuration, DeviceTrustScore to be kept.
         ml_only_cols = ['FailedLoginCount', 'BeneficiaryAdded', 'account', 'ClickRate', 'PagesVisited', 
-                        'LoginHour', 'RapidTransactions', 'NewDeviceLogin', 'PasswordChanged', 'Channel', 
-                        'SessionDuration', 'DeviceTrustScore', 'RiskLabel']
+                        'LoginHour', 'RapidTransactions', 'NewDeviceLogin', 'PasswordChanged', 'RiskLabel']
         activity_row = {k: v for k, v in new_log.items() if k not in ml_only_cols}
         
         # Fill missing columns with 0 or default to verify schema compliance
@@ -385,9 +410,7 @@ class DatabaseManager:
             
             # --- ROW UPDATING LOGIC FOR FAILED LOGINS ---
             # If this is a failed login, check if a row for this AccountID and LoginHour exists
-            # We look at the last 10 rows to see if we should 'update' instead of 'append'
             if ml_row.get('FailedLoginCount', 0) > 0 and not ml_df.empty:
-                # Find the most recent record for this user in this hour
                 mask = (ml_df['AccountID'] == account_id) & (ml_df['LoginHour'] == ml_row['LoginHour'])
                 if mask.any():
                     idx = ml_df[mask].index[-1]
@@ -395,25 +418,8 @@ class DatabaseManager:
                     total_fails = ml_df.at[idx, 'FailedLoginCount'] + ml_row['FailedLoginCount']
                     ml_df.at[idx, 'FailedLoginCount'] = total_fails
                     
-                    # Dynamically escalate the score based on the number of fails
-                    if total_fails <= 2:
-                        escalated_score = 0
-                    elif total_fails == 3:
-                        escalated_score = 20
-                    elif total_fails == 4:
-                        escalated_score = 40
-                    elif total_fails == 5:
-                        escalated_score = 60
-                    elif total_fails == 6:
-                        escalated_score = 75
-                    elif total_fails == 7:
-                        escalated_score = 85
-                    elif total_fails == 8:
-                        escalated_score = 95
-                    else:
-                        escalated_score = 100
-                    
-                    ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], escalated_score)
+                    # Risk score was escalated early in method so we just write it directly:
+                    ml_df.at[idx, 'CyberRiskScore'] = max(ml_df.at[idx, 'CyberRiskScore'], risk_score)
                     
                     print(f"DEBUG: Updated existing ML row for {account_id} (Fails: {total_fails}, New Score: {ml_df.at[idx, 'CyberRiskScore']})")
                 else:
